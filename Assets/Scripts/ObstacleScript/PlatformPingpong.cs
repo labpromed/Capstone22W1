@@ -6,12 +6,14 @@ public class PlatformPingpong : MonoBehaviour
 {
     [SerializeField] float speed = 2f;
     [SerializeField] float distance = 3f;
+    [SerializeField] Vector3 moveDir = Vector3.right;
     private Vector3 startPos;
     private Rigidbody rb;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        moveDir = moveDir.normalized;
         rb.isKinematic = true;
         startPos = transform.position;
     }
@@ -19,7 +21,7 @@ public class PlatformPingpong : MonoBehaviour
     void FixedUpdate()
     {
         float pingPong = Mathf.PingPong(Time.time * speed, distance * 2) - distance;
-        Vector3 targetPos = startPos + new Vector3(pingPong, 0f, 0f);
+        Vector3 targetPos = startPos + moveDir * pingPong;
         rb.MovePosition(targetPos);
     }
 }

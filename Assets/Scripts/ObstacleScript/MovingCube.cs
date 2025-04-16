@@ -7,6 +7,7 @@ public class MovingCube : MonoBehaviour
     [SerializeField] float moveDistance = 3f;
     [SerializeField] float moveSpeed = 2f;
     [SerializeField] float pauseTime = 1f;
+    [SerializeField] Vector3 moveDir = Vector3.right;
 
     private Rigidbody rb;
     private Vector3 startPos;
@@ -19,8 +20,10 @@ public class MovingCube : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.isKinematic = true;
+
+        moveDir = moveDir.normalized;
         startPos = transform.position;
-        targetPos = startPos + Vector3.right * moveDistance;
+        targetPos = startPos + moveDir * moveDistance;
     }
 
     void FixedUpdate()
