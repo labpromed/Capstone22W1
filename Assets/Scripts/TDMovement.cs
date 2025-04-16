@@ -2,18 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class TDMovement : MonoBehaviour
 {
     public static TDMovement instance;
+
     [Header("Movement")]
     [SerializeField] float moveSpeed = 5f;
+    [SerializeField] float sprintSpeed = 10f;
     [SerializeField] float rotationSpeed = 10f;
     [SerializeField] float jumpForce = 5f;
 
     [Header("References")]
     [SerializeField] Transform cameraTransform;
-
+    
+    private float currentSpeed;
+    private bool isSprinting = false;
     private PlayerInput inputActions;
     private Rigidbody rb;
     private Vector2 moveInput;
@@ -32,6 +37,8 @@ public class TDMovement : MonoBehaviour
     void Start()
     {
         Cursor.visible = false;
+        if (respawnPoint == Vector3.zero)
+        respawnPoint = transform.position;
     }
 
     void OnEnable()
@@ -39,6 +46,8 @@ public class TDMovement : MonoBehaviour
         inputActions.Player.Enable();
         inputActions.Player.Move.performed += OnMove;
         inputActions.Player.Move.canceled += ctx => moveInput = Vector2.zero;
+        inputActions.Player.Sprint.started += ctx => isSprinting = true;
+        inputActions.Player.Sprint.canceled += ctx => isSprinting = false;
         inputActions.Player.Jump.performed += ctx => jumpPressed = true;
     }
 
@@ -58,6 +67,11 @@ public class TDMovement : MonoBehaviour
     {
         Move();
         HandleJump();
+
+        if (transform.position.y < -10f)
+        {
+            Die();
+        }
     }
 
     void Move()
@@ -71,9 +85,27 @@ public class TDMovement : MonoBehaviour
         right.Normalize();
 
         Vector3 moveDir = forward * moveInput.y + right * moveInput.x;
-        Vector3 targetPos = rb.position + moveDir * moveSpeed * Time.fixedDeltaTime;
 
+        float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
+
+        Vector3 targetPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
         rb.MovePosition(targetPos);
+
+        // RaycastHit hit;
+        // bool grounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 1.2f);
+
+        // Vector3 slopeNormal = hit.normal;
+        // Vector3 slopeDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
+
+        // Vector3 finalMove = grounded ? slopeDir : moveDir;
+        // Vector3 newPos = rb.position + finalMove * currentSpeed * Time.fixedDeltaTime;
+
+        // rb.MovePosition(newPos);
+
+        // if (grounded && moveInput == Vector2.zero)
+        // {
+        //     rb.velocity = Vector3.zero;
+        // }
 
         if (moveDir != Vector3.zero)
         {
@@ -90,6 +122,22 @@ public class TDMovement : MonoBehaviour
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
         jumpPressed = false;
+    }
+
+    [SerializeField] Vector3 respawnPoint;
+
+    public void SetRespawnPoint(Vector3 newPoint)
+    {
+        respawnPoint = newPoint;
+        Debug.Log("Respawn to" + newPoint);
+    }
+
+    void Die()
+    {
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        transform.position = respawnPoint;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     bool IsGrounded()
