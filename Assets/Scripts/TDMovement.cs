@@ -32,6 +32,9 @@ public class TDMovement : MonoBehaviour
 
         rb = GetComponent<Rigidbody>();
         inputActions = new PlayerInput();
+
+        rb.drag = 0f;
+        rb.angularDrag = 0f;
     }
 
     void Start()
@@ -88,24 +91,24 @@ public class TDMovement : MonoBehaviour
 
         float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
 
-        Vector3 targetPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
-        rb.MovePosition(targetPos);
+        // Vector3 targetPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
+        // rb.MovePosition(targetPos);
 
-        // RaycastHit hit;
-        // bool grounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 1.2f);
+        RaycastHit hit;
+        bool grounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 1.2f);
 
-        // Vector3 slopeNormal = hit.normal;
-        // Vector3 slopeDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
+        Vector3 slopeNormal = hit.normal;
+        Vector3 slopeDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
 
-        // Vector3 finalMove = grounded ? slopeDir : moveDir;
-        // Vector3 newPos = rb.position + finalMove * currentSpeed * Time.fixedDeltaTime;
+        Vector3 finalMove = grounded ? slopeDir : moveDir;
+        Vector3 newPos = rb.position + finalMove * currentSpeed * Time.fixedDeltaTime;
 
-        // rb.MovePosition(newPos);
+        rb.MovePosition(newPos);
 
-        // if (grounded && moveInput == Vector2.zero)
-        // {
-        //     rb.velocity = Vector3.zero;
-        // }
+        if (grounded && moveInput == Vector2.zero)
+        {
+            rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+        }
 
         if (moveDir != Vector3.zero)
         {
@@ -136,8 +139,8 @@ public class TDMovement : MonoBehaviour
     {
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-        transform.position = respawnPoint;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        transform.position = respawnPoint + Vector3.up * 2;
+        //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     bool IsGrounded()
