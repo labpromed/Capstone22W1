@@ -16,6 +16,10 @@ public class TDMovement : MonoBehaviour
 
     [Header("References")]
     [SerializeField] Transform cameraTransform;
+
+    [Header("Slope")]
+    [SerializeField] float maxSlopeAngle;
+    private RaycastHit slopeHit;
     
     private float currentSpeed;
     private bool isSprinting = false;
@@ -39,6 +43,7 @@ public class TDMovement : MonoBehaviour
 
     void Start()
     {
+        Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         if (respawnPoint == Vector3.zero)
         respawnPoint = transform.position;
@@ -74,9 +79,11 @@ public class TDMovement : MonoBehaviour
         if (transform.position.y < -10f)
         {
             Die();
+            Debug.Log("Dead");
         }
     }
-
+    
+    Vector3 moveDir;
     void Move()
     {
         Vector3 forward = cameraTransform.forward;
@@ -87,35 +94,65 @@ public class TDMovement : MonoBehaviour
         forward.Normalize();
         right.Normalize();
 
-        Vector3 moveDir = forward * moveInput.y + right * moveInput.x;
+        moveDir = forward * moveInput.y + right * moveInput.x;
 
         float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
 
-        // Vector3 targetPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
-        // rb.MovePosition(targetPos);
+        Vector3 targetPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
+        //rb.MovePosition(targetPos);
 
+        //SlopeMovement
+
+        if (OnSlope())
+        {
+            targetPos = rb.position + SlopeMoveDir() * currentSpeed * Time.fixedDeltaTime;
+            rb.MovePosition(targetPos * currentSpeed * 20f);
+        }
+        else
+        {
+            rb.MovePosition(targetPos);
+        }
         RaycastHit hit;
         bool grounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 1.2f);
 
-        Vector3 slopeNormal = hit.normal;
-        Vector3 slopeDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
+        // Vector3 slopeNormal = hit.normal;
+        // Vector3 slopeDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
 
-        Vector3 finalMove = grounded ? slopeDir : moveDir;
-        Vector3 newPos = rb.position + finalMove * currentSpeed * Time.fixedDeltaTime;
+        // Vector3 finalMove = grounded ? slopeDir : moveDir;
+        // Vector3 newPos = rb.position + finalMove * currentSpeed * Time.fixedDeltaTime;
 
-        rb.MovePosition(newPos);
+        // rb.MovePosition(newPos);
 
-        if (grounded && moveInput == Vector2.zero)
-        {
-            rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
-        }
-
+        // if (grounded && moveInput == Vector2.zero)
+        // {
+        //     rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+        // }
+        
+        //end of slope movement
         if (moveDir != Vector3.zero)
         {
             Quaternion toRotation = Quaternion.LookRotation(moveDir, Vector3.up);
             Quaternion rotation = Quaternion.Slerp(transform.rotation, toRotation, rotationSpeed * Time.fixedDeltaTime);
             rb.MoveRotation(rotation);
         }
+    }
+    
+    private bool OnSlope()
+    {
+        float playerHeight = transform.position.y + 1f;
+
+        if(Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.3f))
+        {
+            float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
+            return angle < maxSlopeAngle && angle != 0;
+        }
+
+        return false;
+    }
+
+    private Vector3 SlopeMoveDir()
+    {
+        return Vector3.ProjectOnPlane(moveDir, slopeHit.normal).normalized;
     }
 
     void HandleJump()
@@ -140,6 +177,7 @@ public class TDMovement : MonoBehaviour
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         transform.position = respawnPoint + Vector3.up * 2;
+        Debug.Log("Respawn");
         //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
