@@ -10,7 +10,7 @@ public class TDCamera : MonoBehaviour
     [SerializeField] float rotationSpeed = 5f;
     [SerializeField] float minYAngle = -35f;
     [SerializeField] float maxYAngle = 60f;
-    [SerializeField] float SmoothFollow = 10f;
+    [SerializeField] float SmoothFollow = 4.5f;
 
     private float currentYaw = 0f;
     private float currentPitch = 0f;
