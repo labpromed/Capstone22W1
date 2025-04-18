@@ -7,7 +7,8 @@ using UnityEngine.SceneManagement;
 public class TDMovement : MonoBehaviour
 {
     public static TDMovement instance;
-
+    
+    
     [Header("Movement")]
     [SerializeField] float moveSpeed = 5f;
     [SerializeField] float sprintSpeed = 10f;
@@ -27,6 +28,7 @@ public class TDMovement : MonoBehaviour
     private Rigidbody rb;
     private Vector2 moveInput;
     private bool jumpPressed;
+    private Animator animator;
 
     void Awake()
     {
@@ -39,6 +41,8 @@ public class TDMovement : MonoBehaviour
 
         rb.drag = 0f;
         rb.angularDrag = 0f;
+
+        animator = GetComponent<Animator>();
     }
 
     void Start()
@@ -81,9 +85,17 @@ public class TDMovement : MonoBehaviour
             Die();
             Debug.Log("Dead");
         }
+
+        animator.SetFloat("Speed", ((moveDir + rb.position) - rb.position).magnitude);
+        
+        grounded = IsGrounded();
+        bool isInAir = !grounded;
+        animator.SetBool("IsJumping", isInAir && rb.velocity.y > 0.1f);
+        animator.SetBool("IsFalling", isInAir && rb.velocity.y < -0.1f);
     }
     
     Vector3 moveDir;
+    bool grounded;
     void Move()
     {
         Vector3 forward = cameraTransform.forward;
@@ -96,7 +108,7 @@ public class TDMovement : MonoBehaviour
 
         moveDir = forward * moveInput.y + right * moveInput.x;
 
-        float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
+        currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
 
         Vector3 targetPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
         Vector3 smoothPos = Vector3.MoveTowards(rb.position, targetPos, currentSpeed * Time.fixedDeltaTime);
@@ -115,8 +127,12 @@ public class TDMovement : MonoBehaviour
         {
             rb.MovePosition(smoothPos);
         }
+        
+        float speed = (new Vector3 (rb.velocity.x, 0f, rb.velocity.z).normalized * currentSpeed).magnitude;
+        //Debug.Log(speed);
+        //Debug.Log(((moveDir + rb.position) - rb.position).magnitude);
         RaycastHit hit;
-        bool grounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 1.2f);
+        grounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 1.2f);
 
         // Vector3 slopeNormal = hit.normal;
         // Vector3 slopeDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
