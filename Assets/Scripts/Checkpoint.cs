@@ -13,6 +13,7 @@ public class Checkpoint : MonoBehaviour
             {
                 player.SetRespawnPoint(transform.position);
                 Debug.Log("Checkpoint!");
+                gameObject.SetActive(false);
             }
         }
     }
