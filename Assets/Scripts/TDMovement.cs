@@ -99,18 +99,21 @@ public class TDMovement : MonoBehaviour
         float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
 
         Vector3 targetPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
+        Vector3 smoothPos = Vector3.MoveTowards(rb.position, targetPos, currentSpeed * Time.fixedDeltaTime);
         //rb.MovePosition(targetPos);
 
         //SlopeMovement
 
         if (OnSlope())
         {
+            rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
             targetPos = rb.position + SlopeMoveDir() * currentSpeed * Time.fixedDeltaTime;
-            rb.MovePosition(targetPos * currentSpeed * 20f);
+            smoothPos = Vector3.MoveTowards(rb.position, targetPos, currentSpeed * Time.fixedDeltaTime);
+            rb.MovePosition(smoothPos);
         }
         else
         {
-            rb.MovePosition(targetPos);
+            rb.MovePosition(smoothPos);
         }
         RaycastHit hit;
         bool grounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 1.2f);
@@ -144,6 +147,7 @@ public class TDMovement : MonoBehaviour
         if(Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.3f))
         {
             float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
+            //Debug.Log(angle);
             return angle < maxSlopeAngle && angle != 0;
         }
 

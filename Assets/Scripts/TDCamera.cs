@@ -15,7 +15,7 @@ public class TDCamera : MonoBehaviour
     private float currentYaw = 0f;
     private float currentPitch = 0f;
 
-    void LateUpdate()
+    void Update()
     {
         if (!target) return;
 
